@@ -1,4 +1,439 @@
 
+// import React, { useEffect, useMemo, useState } from "react";
+// import axios from "axios";
+
+// function Billing() {
+//   const [products, setProducts] = useState([]);
+//   const [search, setSearch] = useState("");
+//   const [cart, setCart] = useState([]);
+//   const [paymentMethod, setPaymentMethod] = useState("Cash");
+//   const [loading, setLoading] = useState(false);
+//   const [message, setMessage] = useState("");
+//   const [invoice, setInvoice] = useState(null);
+
+//   const BASE_URL = "https://eposbackend-2026.onrender.com/api";
+
+//   const getHeaders = () => ({
+//     Authorization: `Bearer ${localStorage.getItem("token")}`,
+//   });
+
+//   // Get products from backend
+//   const fetchProducts = async () => {
+//     try {
+//       const response = await axios.get(
+//         `${BASE_URL}/api/products`,
+//         { headers: getHeaders() }
+//       );
+
+//       const data = response.data;
+//       setProducts(Array.isArray(data) ? data : data.products || []);
+//     } catch (error) {
+//       setMessage(
+//         error.response?.data?.message || "Failed to load products"
+//       );
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchProducts();
+//   }, []);
+
+//   // Search products by name or SKU
+//   const filteredProducts = useMemo(() => {
+//     return products.filter((product) =>
+//       `${product.name} ${product.sku}`
+//         .toLowerCase()
+//         .includes(search.toLowerCase())
+//     );
+//   }, [products, search]);
+
+//   // Add product to cart
+//   const addToCart = (product) => {
+//     setMessage("");
+
+//     if (product.stock < 1) {
+//       setMessage(`${product.name} is out of stock`);
+//       return;
+//     }
+
+//     setCart((previousCart) => {
+//       const existing = previousCart.find(
+//         (item) => item._id === product._id
+//       );
+
+//       if (existing) {
+//         if (existing.quantity >= product.stock) {
+//           setMessage("Available stock limit reached");
+//           return previousCart;
+//         }
+
+//         return previousCart.map((item) =>
+//           item._id === product._id
+//             ? { ...item, quantity: item.quantity + 1 }
+//             : item
+//         );
+//       }
+
+//       return [...previousCart, { ...product, quantity: 1 }];
+//     });
+//   };
+
+//   // Change quantity
+//   const changeQuantity = (productId, quantity) => {
+//     const product = products.find((item) => item._id === productId);
+//     const newQuantity = Number(quantity);
+
+//     if (!product || !Number.isInteger(newQuantity) || newQuantity < 1) {
+//       return;
+//     }
+
+//     if (newQuantity > product.stock) {
+//       setMessage(`Only ${product.stock} items available`);
+//       return;
+//     }
+
+//     setMessage("");
+//     setCart((previousCart) =>
+//       previousCart.map((item) =>
+//         item._id === productId
+//           ? { ...item, quantity: newQuantity }
+//           : item
+//       )
+//     );
+//   };
+
+//   // Remove product from cart
+//   const removeFromCart = (productId) => {
+//     setCart((previousCart) =>
+//       previousCart.filter((item) => item._id !== productId)
+//     );
+//   };
+
+//   // Calculate total
+//   const total = cart.reduce(
+//     (sum, item) => sum + item.price * item.quantity,
+//     0
+//   );
+
+//   // Checkout
+//   const handleCheckout = async () => {
+//     if (cart.length === 0) {
+//       setMessage("Please add products to the cart");
+//       return;
+//     }
+
+//     try {
+//       setLoading(true);
+//       setMessage("");
+
+//       const response = await axios.post(
+//         `${BASE_URL}/api/sales`,
+//         {
+//           items: cart.map((item) => ({
+//             productId: item._id,
+//             quantity: item.quantity,
+//           })),
+//           paymentMethod,
+//         },
+//         { headers: getHeaders() }
+//       );
+
+//       setInvoice(response.data.sale);
+//       setCart([]);
+//       await fetchProducts();
+//       setMessage("Sale completed successfully!");
+//     } catch (error) {
+//       setMessage(
+//         error.response?.data?.message || "Checkout failed"
+//       );
+//       await fetchProducts();
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   // Print invoice
+//   const printInvoice = () => {
+//     window.print();
+//   };
+
+//   return (
+//     <div className="container-fluid py-4">
+//       <style>{`
+//         @media print {
+//           body * {
+//             visibility: hidden;
+//           }
+
+//           .invoice-print, .invoice-print * {
+//             visibility: visible;
+//           }
+
+//           .invoice-print {
+//             position: absolute;
+//             left: 0;
+//             top: 0;
+//             width: 100%;
+//             padding: 20px;
+//           }
+
+//           .no-print {
+//             display: none !important;
+//           }
+//         }
+//       `}</style>
+
+//       <div className="d-flex justify-content-between align-items-center mb-4 no-print">
+//         <div>
+//           <h2 className="fw-bold">Textile POS Billing</h2>
+//           <p className="text-muted mb-0">
+//             Search products and create customer bills
+//           </p>
+//         </div>
+//         <span className="badge text-bg-primary fs-6">
+//           {cart.length} product(s)
+//         </span>
+//       </div>
+
+//       {message && (
+//         <div className="alert alert-info no-print">
+//           {message}
+//         </div>
+//       )}
+
+//       {invoice && (
+//         <div className="card shadow-sm mb-4 invoice-print">
+//           <div className="card-body">
+//             <div className="text-center mb-4">
+//               <h2 className="fw-bold">TEXTILE STORE</h2>
+//               <p className="mb-1">Sales Invoice</p>
+//               <h5>{invoice.billNumber}</h5>
+//             </div>
+
+//             <p>
+//               <strong>Date:</strong>{" "}
+//               {new Date(invoice.createdAt).toLocaleString()}
+//             </p>
+
+//             <p>
+//               <strong>Payment:</strong> {invoice.paymentMethod}
+//             </p>
+
+//             <div className="table-responsive">
+//               <table className="table table-bordered">
+//                 <thead>
+//                   <tr>
+//                     <th>Product</th>
+//                     <th>SKU</th>
+//                     <th>Price</th>
+//                     <th>Qty</th>
+//                     <th className="text-end">Amount</th>
+//                   </tr>
+//                 </thead>
+//                 <tbody>
+//                   {invoice.items.map((item, index) => (
+//                     <tr key={item.product || index}>
+//                       <td>{item.name}</td>
+//                       <td>{item.sku}</td>
+//                       <td>₹{item.price.toFixed(2)}</td>
+//                       <td>{item.quantity}</td>
+//                       <td className="text-end">
+//                         ₹{item.lineTotal.toFixed(2)}
+//                       </td>
+//                     </tr>
+//                   ))}
+//                 </tbody>
+//                 <tfoot>
+//                   <tr>
+//                     <th colSpan="4" className="text-end">
+//                       Grand Total
+//                     </th>
+//                     <th className="text-end">
+//                       ₹{invoice.total.toFixed(2)}
+//                     </th>
+//                   </tr>
+//                 </tfoot>
+//               </table>
+//             </div>
+
+//             <p className="text-center mt-4">
+//               Thank you for shopping with us!
+//             </p>
+
+//             <div className="text-center no-print">
+//               <button
+//                 className="btn btn-dark me-2"
+//                 onClick={printInvoice}
+//               >
+//                 Print Receipt
+//               </button>
+
+//               <button
+//                 className="btn btn-outline-primary"
+//                 onClick={() => setInvoice(null)}
+//               >
+//                 New Bill
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+
+//       <div className="row g-4 no-print">
+//         <div className="col-lg-7">
+//           <div className="card shadow-sm h-100">
+//             <div className="card-body">
+//               <h5 className="fw-bold mb-3">Products</h5>
+
+//               <input
+//                 type="text"
+//                 className="form-control mb-3"
+//                 placeholder="Search by product name or SKU..."
+//                 value={search}
+//                 onChange={(e) => setSearch(e.target.value)}
+//               />
+
+//               <div className="table-responsive">
+//                 <table className="table table-hover align-middle">
+//                   <thead className="table-light">
+//                     <tr>
+//                       <th>Product</th>
+//                       <th>Price</th>
+//                       <th>Stock</th>
+//                       <th>Action</th>
+//                     </tr>
+//                   </thead>
+//                   <tbody>
+//                     {filteredProducts.map((product) => (
+//                       <tr key={product._id}>
+//                         <td>
+//                           <strong>{product.name}</strong>
+//                           <br />
+//                           <small className="text-muted">
+//                             {product.sku}
+//                           </small>
+//                         </td>
+//                         <td>₹{Number(product.price).toFixed(2)}</td>
+//                         <td>{product.stock}</td>
+//                         <td>
+//                           <button
+//                             className="btn btn-sm btn-primary"
+//                             disabled={product.stock < 1}
+//                             onClick={() => addToCart(product)}
+//                           >
+//                             Add
+//                           </button>
+//                         </td>
+//                       </tr>
+//                     ))}
+
+//                     {filteredProducts.length === 0 && (
+//                       <tr>
+//                         <td colSpan="4" className="text-center py-4">
+//                           No products found
+//                         </td>
+//                       </tr>
+//                     )}
+//                   </tbody>
+//                 </table>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+
+//         <div className="col-lg-5">
+//           <div className="card shadow-sm">
+//             <div className="card-body">
+//               <h5 className="fw-bold mb-3">Shopping Cart</h5>
+
+//               {cart.length === 0 ? (
+//                 <p className="text-muted">
+//                   No products added yet.
+//                 </p>
+//               ) : (
+//                 cart.map((item) => (
+//                   <div
+//                     key={item._id}
+//                     className="border-bottom py-3"
+//                   >
+//                     <div className="d-flex justify-content-between">
+//                       <strong>{item.name}</strong>
+//                       <button
+//                         className="btn btn-sm btn-outline-danger"
+//                         onClick={() => removeFromCart(item._id)}
+//                       >
+//                         Remove
+//                       </button>
+//                     </div>
+
+//                     <div className="d-flex justify-content-between align-items-center mt-2">
+//                       <span>
+//                         ₹{Number(item.price).toFixed(2)} ×
+//                       </span>
+
+//                       <input
+//                         type="number"
+//                         min="1"
+//                         max={item.stock}
+//                         className="form-control form-control-sm"
+//                         style={{ width: "85px" }}
+//                         value={item.quantity}
+//                         onChange={(e) =>
+//                           changeQuantity(item._id, e.target.value)
+//                         }
+//                       />
+
+//                       <strong>
+//                         ₹{(item.price * item.quantity).toFixed(2)}
+//                       </strong>
+//                     </div>
+//                   </div>
+//                 ))
+//               )}
+
+//               <div className="mt-4">
+//                 <label className="form-label fw-semibold">
+//                   Payment Method
+//                 </label>
+
+//                 <select
+//                   className="form-select"
+//                   value={paymentMethod}
+//                   onChange={(e) => setPaymentMethod(e.target.value)}
+//                 >
+//                   <option value="Cash">Cash</option>
+//                   <option value="UPI">UPI</option>
+//                   <option value="Card">Card</option>
+//                 </select>
+//               </div>
+
+//               <div className="d-flex justify-content-between mt-4">
+//                 <h5>Grand Total</h5>
+//                 <h4 className="text-success fw-bold">
+//                   ₹{total.toFixed(2)}
+//                 </h4>
+//               </div>
+
+//               <button
+//                 className="btn btn-success w-100 mt-3"
+//                 disabled={loading || cart.length === 0}
+//                 onClick={handleCheckout}
+//               >
+//                 {loading ? "Processing..." : "Complete Sale"}
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+// export default Billing;
+
+
+
+
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
@@ -11,25 +446,33 @@ function Billing() {
   const [message, setMessage] = useState("");
   const [invoice, setInvoice] = useState(null);
 
+  // Backend API URL
   const BASE_URL = "https://eposbackend-2026.onrender.com/api";
 
+  // Authentication headers
   const getHeaders = () => ({
     Authorization: `Bearer ${localStorage.getItem("token")}`,
   });
 
-  // Get products from backend
+  // Fetch products from backend
   const fetchProducts = async () => {
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/products`,
+        `${BASE_URL}/products`,
         { headers: getHeaders() }
       );
 
       const data = response.data;
-      setProducts(Array.isArray(data) ? data : data.products || []);
+
+      setProducts(
+        Array.isArray(data) ? data : data.products || []
+      );
     } catch (error) {
+      console.error("Fetch products error:", error);
+
       setMessage(
-        error.response?.data?.message || "Failed to load products"
+        error.response?.data?.message ||
+          "Failed to load products. Please check the backend API."
       );
     }
   };
@@ -41,7 +484,7 @@ function Billing() {
   // Search products by name or SKU
   const filteredProducts = useMemo(() => {
     return products.filter((product) =>
-      `${product.name} ${product.sku}`
+      `${product.name || ""} ${product.sku || ""}`
         .toLowerCase()
         .includes(search.toLowerCase())
     );
@@ -51,7 +494,7 @@ function Billing() {
   const addToCart = (product) => {
     setMessage("");
 
-    if (product.stock < 1) {
+    if (Number(product.stock) < 1) {
       setMessage(`${product.name} is out of stock`);
       return;
     }
@@ -62,7 +505,7 @@ function Billing() {
       );
 
       if (existing) {
-        if (existing.quantity >= product.stock) {
+        if (existing.quantity >= Number(product.stock)) {
           setMessage("Available stock limit reached");
           return previousCart;
         }
@@ -78,21 +521,29 @@ function Billing() {
     });
   };
 
-  // Change quantity
+  // Change product quantity
   const changeQuantity = (productId, quantity) => {
-    const product = products.find((item) => item._id === productId);
+    const product = products.find(
+      (item) => item._id === productId
+    );
+
     const newQuantity = Number(quantity);
 
-    if (!product || !Number.isInteger(newQuantity) || newQuantity < 1) {
+    if (
+      !product ||
+      !Number.isInteger(newQuantity) ||
+      newQuantity < 1
+    ) {
       return;
     }
 
-    if (newQuantity > product.stock) {
+    if (newQuantity > Number(product.stock)) {
       setMessage(`Only ${product.stock} items available`);
       return;
     }
 
     setMessage("");
+
     setCart((previousCart) =>
       previousCart.map((item) =>
         item._id === productId
@@ -107,15 +558,18 @@ function Billing() {
     setCart((previousCart) =>
       previousCart.filter((item) => item._id !== productId)
     );
+
+    setMessage("");
   };
 
-  // Calculate total
+  // Calculate grand total
   const total = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) =>
+      sum + Number(item.price) * item.quantity,
     0
   );
 
-  // Checkout
+  // Complete sale
   const handleCheckout = async () => {
     if (cart.length === 0) {
       setMessage("Please add products to the cart");
@@ -127,7 +581,7 @@ function Billing() {
       setMessage("");
 
       const response = await axios.post(
-        `${BASE_URL}/api/sales`,
+        `${BASE_URL}/sales`,
         {
           items: cart.map((item) => ({
             productId: item._id,
@@ -138,14 +592,22 @@ function Billing() {
         { headers: getHeaders() }
       );
 
-      setInvoice(response.data.sale);
+      // Support either { sale: {...} } or a direct sale response
+      const sale = response.data.sale || response.data;
+
+      setInvoice(sale);
       setCart([]);
-      await fetchProducts();
       setMessage("Sale completed successfully!");
+
+      await fetchProducts();
     } catch (error) {
+      console.error("Checkout error:", error);
+
       setMessage(
-        error.response?.data?.message || "Checkout failed"
+        error.response?.data?.message ||
+          "Checkout failed. Please check the Sales API."
       );
+
       await fetchProducts();
     } finally {
       setLoading(false);
@@ -157,6 +619,10 @@ function Billing() {
     window.print();
   };
 
+  // Safely format currency
+  const formatPrice = (value) =>
+    Number(value || 0).toFixed(2);
+
   return (
     <div className="container-fluid py-4">
       <style>{`
@@ -165,7 +631,8 @@ function Billing() {
             visibility: hidden;
           }
 
-          .invoice-print, .invoice-print * {
+          .invoice-print,
+          .invoice-print * {
             visibility: visible;
           }
 
@@ -175,6 +642,7 @@ function Billing() {
             top: 0;
             width: 100%;
             padding: 20px;
+            box-shadow: none !important;
           }
 
           .no-print {
@@ -183,6 +651,7 @@ function Billing() {
         }
       `}</style>
 
+      {/* Page heading */}
       <div className="d-flex justify-content-between align-items-center mb-4 no-print">
         <div>
           <h2 className="fw-bold">Textile POS Billing</h2>
@@ -190,33 +659,41 @@ function Billing() {
             Search products and create customer bills
           </p>
         </div>
+
         <span className="badge text-bg-primary fs-6">
           {cart.length} product(s)
         </span>
       </div>
 
+      {/* Messages */}
       {message && (
         <div className="alert alert-info no-print">
           {message}
         </div>
       )}
 
+      {/* Invoice */}
       {invoice && (
         <div className="card shadow-sm mb-4 invoice-print">
           <div className="card-body">
             <div className="text-center mb-4">
               <h2 className="fw-bold">TEXTILE STORE</h2>
               <p className="mb-1">Sales Invoice</p>
-              <h5>{invoice.billNumber}</h5>
+              <h5>
+                {invoice.billNumber || invoice._id || "Sales Invoice"}
+              </h5>
             </div>
 
             <p>
               <strong>Date:</strong>{" "}
-              {new Date(invoice.createdAt).toLocaleString()}
+              {invoice.createdAt
+                ? new Date(invoice.createdAt).toLocaleString()
+                : new Date().toLocaleString()}
             </p>
 
             <p>
-              <strong>Payment:</strong> {invoice.paymentMethod}
+              <strong>Payment:</strong>{" "}
+              {invoice.paymentMethod || paymentMethod}
             </p>
 
             <div className="table-responsive">
@@ -230,26 +707,35 @@ function Billing() {
                     <th className="text-end">Amount</th>
                   </tr>
                 </thead>
+
                 <tbody>
-                  {invoice.items.map((item, index) => (
-                    <tr key={item.product || index}>
-                      <td>{item.name}</td>
-                      <td>{item.sku}</td>
-                      <td>₹{item.price.toFixed(2)}</td>
-                      <td>{item.quantity}</td>
-                      <td className="text-end">
-                        ₹{item.lineTotal.toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
+                  {(invoice.items || []).map((item, index) => {
+                    const price = Number(item.price || 0);
+                    const quantity = Number(item.quantity || 0);
+                    const lineTotal =
+                      item.lineTotal ?? price * quantity;
+
+                    return (
+                      <tr key={item.product || item._id || index}>
+                        <td>{item.name || "Product"}</td>
+                        <td>{item.sku || "-"}</td>
+                        <td>₹{formatPrice(price)}</td>
+                        <td>{quantity}</td>
+                        <td className="text-end">
+                          ₹{formatPrice(lineTotal)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
+
                 <tfoot>
                   <tr>
                     <th colSpan="4" className="text-end">
                       Grand Total
                     </th>
                     <th className="text-end">
-                      ₹{invoice.total.toFixed(2)}
+                      ₹{formatPrice(invoice.total)}
                     </th>
                   </tr>
                 </tfoot>
@@ -270,7 +756,10 @@ function Billing() {
 
               <button
                 className="btn btn-outline-primary"
-                onClick={() => setInvoice(null)}
+                onClick={() => {
+                  setInvoice(null);
+                  setMessage("");
+                }}
               >
                 New Bill
               </button>
@@ -279,7 +768,9 @@ function Billing() {
         </div>
       )}
 
+      {/* Products and cart */}
       <div className="row g-4 no-print">
+        {/* Product list */}
         <div className="col-lg-7">
           <div className="card shadow-sm h-100">
             <div className="card-body">
@@ -303,6 +794,7 @@ function Billing() {
                       <th>Action</th>
                     </tr>
                   </thead>
+
                   <tbody>
                     {filteredProducts.map((product) => (
                       <tr key={product._id}>
@@ -310,15 +802,20 @@ function Billing() {
                           <strong>{product.name}</strong>
                           <br />
                           <small className="text-muted">
-                            {product.sku}
+                            {product.sku || "-"}
                           </small>
                         </td>
-                        <td>₹{Number(product.price).toFixed(2)}</td>
-                        <td>{product.stock}</td>
+
+                        <td>
+                          ₹{formatPrice(product.price)}
+                        </td>
+
+                        <td>{product.stock ?? 0}</td>
+
                         <td>
                           <button
                             className="btn btn-sm btn-primary"
-                            disabled={product.stock < 1}
+                            disabled={Number(product.stock) < 1}
                             onClick={() => addToCart(product)}
                           >
                             Add
@@ -329,7 +826,10 @@ function Billing() {
 
                     {filteredProducts.length === 0 && (
                       <tr>
-                        <td colSpan="4" className="text-center py-4">
+                        <td
+                          colSpan="4"
+                          className="text-center py-4"
+                        >
                           No products found
                         </td>
                       </tr>
@@ -341,6 +841,7 @@ function Billing() {
           </div>
         </div>
 
+        {/* Shopping cart */}
         <div className="col-lg-5">
           <div className="card shadow-sm">
             <div className="card-body">
@@ -358,6 +859,7 @@ function Billing() {
                   >
                     <div className="d-flex justify-content-between">
                       <strong>{item.name}</strong>
+
                       <button
                         className="btn btn-sm btn-outline-danger"
                         onClick={() => removeFromCart(item._id)}
@@ -366,9 +868,9 @@ function Billing() {
                       </button>
                     </div>
 
-                    <div className="d-flex justify-content-between align-items-center mt-2">
+                    <div className="d-flex justify-content-between align-items-center mt-2 gap-2">
                       <span>
-                        ₹{Number(item.price).toFixed(2)} ×
+                        ₹{formatPrice(item.price)} ×
                       </span>
 
                       <input
@@ -379,18 +881,25 @@ function Billing() {
                         style={{ width: "85px" }}
                         value={item.quantity}
                         onChange={(e) =>
-                          changeQuantity(item._id, e.target.value)
+                          changeQuantity(
+                            item._id,
+                            e.target.value
+                          )
                         }
                       />
 
                       <strong>
-                        ₹{(item.price * item.quantity).toFixed(2)}
+                        ₹
+                        {formatPrice(
+                          Number(item.price) * item.quantity
+                        )}
                       </strong>
                     </div>
                   </div>
                 ))
               )}
 
+              {/* Payment method */}
               <div className="mt-4">
                 <label className="form-label fw-semibold">
                   Payment Method
@@ -399,7 +908,9 @@ function Billing() {
                 <select
                   className="form-select"
                   value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  onChange={(e) =>
+                    setPaymentMethod(e.target.value)
+                  }
                 >
                   <option value="Cash">Cash</option>
                   <option value="UPI">UPI</option>
@@ -407,13 +918,16 @@ function Billing() {
                 </select>
               </div>
 
+              {/* Total */}
               <div className="d-flex justify-content-between mt-4">
                 <h5>Grand Total</h5>
+
                 <h4 className="text-success fw-bold">
-                  ₹{total.toFixed(2)}
+                  ₹{formatPrice(total)}
                 </h4>
               </div>
 
+              {/* Checkout */}
               <button
                 className="btn btn-success w-100 mt-3"
                 disabled={loading || cart.length === 0}
