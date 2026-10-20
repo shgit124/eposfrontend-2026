@@ -28,10 +28,7 @@
 
 import axios from "axios";
 
-const BASE_URL = `${
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:3000"
-}/api`;
+const BASE_URL = "https://eposbackend-2026.onrender.com/api";
 
 const getAuthConfig = () => ({
   headers: {
