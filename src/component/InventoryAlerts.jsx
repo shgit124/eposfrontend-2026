@@ -15,7 +15,7 @@ function InventoryAlerts() {
         const token = localStorage.getItem("token");
 
         const response = await axios.get(
-          "http://localhost:3000/api/products",
+          "https://eposbackend-2026.onrender.com/api/products",
           {
             headers: {
               Authorization: `Bearer ${token}`,

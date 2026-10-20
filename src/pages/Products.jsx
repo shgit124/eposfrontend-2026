@@ -19,7 +19,7 @@ function Products() {
 
   const [formData, setFormData] = useState(initialForm);
 
-  const BASE_URL = "http://localhost:3000/api/products";
+  const BASE_URL = "https://eposbackend-2026.onrender.com/api/products";
 
   const getConfig = () => ({
     headers: {

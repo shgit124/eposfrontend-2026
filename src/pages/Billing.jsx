@@ -11,7 +11,7 @@ function Billing() {
   const [message, setMessage] = useState("");
   const [invoice, setInvoice] = useState(null);
 
-  const BASE_URL = "http://localhost:3000";
+  const BASE_URL = "https://eposbackend-2026.onrender.com/api";
 
   const getHeaders = () => ({
     Authorization: `Bearer ${localStorage.getItem("token")}`,

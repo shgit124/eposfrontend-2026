@@ -15,7 +15,7 @@ function Reports() {
         const token = localStorage.getItem("token");
 
         const response = await axios.get(
-          "http://localhost:3000/api/sales",
+          "https://eposbackend-2026.onrender.com/api/sales",
           {
             headers: {
               Authorization: `Bearer ${token}`,

@@ -3,7 +3,10 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 
 function Suppliers() {
-  const API_URL = "http://localhost:3000/api/suppliers";
+
+
+const API_URL =
+  "https://eposbackend-2026.onrender.com/api/suppliers";
 
   const emptyForm = {
     name: "",

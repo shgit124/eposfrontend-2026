@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const BASE_URL = `${
-  import.meta.env.VITE_API_URL || "http://localhost:3000"
+  import.meta.env.VITE_API_URL || "https://eposbackend-2026.onrender.com"
 }/api`;
 
 function PurchaseReport() {

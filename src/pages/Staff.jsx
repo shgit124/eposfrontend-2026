@@ -15,7 +15,10 @@ function Staff() {
     password: "",
   });
 
-  const BASE_URL = "http://localhost:3000/api/staff";
+
+
+const BASE_URL = "https://eposbackend-2026.onrender.com/api/auth/staff";
+
 
   const getStaff = async () => {
     try {
